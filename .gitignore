@@ -1,0 +1,7 @@
+.DS_Store
+.idea/
+intermediate/
+
+# Ignore only the top-level vendor directory
+/vendor/
+/tmp/
