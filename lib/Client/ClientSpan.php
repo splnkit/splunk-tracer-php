@@ -85,7 +85,7 @@ class ClientSpan implements \SplunkTracingBase\Span {
     }
 
     public function setEndUserId($id) {
-        $this->addTraceJoinId(LIGHTSTEP_JOIN_KEY_END_USER_ID, $id);
+        $this->addTraceJoinId(SPLUNK_JOIN_KEY_END_USER_ID, $id);
         return $this;
     }
 
