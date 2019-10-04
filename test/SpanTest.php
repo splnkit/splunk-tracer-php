@@ -102,38 +102,19 @@ class SpanTest extends BaseSplunkTracingTest {
         $parent->finish();
     }
 
-    public function testSpanThriftRecord() {
-        $tracer = SplunkTracing::newTracer("test_group", "1234567890");
-        $span = $tracer->startSpan("hello/world");
-        $span->setEnduserId("dinosaur_sr");
-        $span->setTag("Titanosaurus", "sauropod");
-        $span->finish();      
-
-        // Transform the object into a associative array
-        $arr = json_decode(json_encode($span->toThrift()), TRUE);
-        $this->assertTrue(is_string($arr["span_guid"]));
-        $this->assertTrue(is_string($arr["trace_guid"]));
-        $this->assertTrue(is_string($arr["runtime_guid"]));
-        $this->assertTrue(is_string($arr["span_name"]));
-        $this->assertEquals(1, count($arr["join_ids"]));
-        $this->assertTrue(is_string($arr["join_ids"][0]["TraceKey"]));
-        $this->assertTrue(is_string($arr["join_ids"][0]["Value"]));
-        $this->assertTrue(is_string($arr["attributes"][0]["Key"]));
-        $this->assertTrue(is_string($arr["attributes"][0]["Value"]));
-    }
 
     public function testInjectJoin() {
         $tracer = SplunkTracing::newTracer("test_group", "1234567890");
         $span = $tracer->startSpan("hello/world");
 
         $carrier = array();
-        $tracer->inject($span, LIGHTSTEP_FORMAT_TEXT_MAP, $carrier);
+        $tracer->inject($span, SPLUNK_FORMAT_TEXT_MAP, $carrier);
         $this->assertEquals($carrier['ot-tracer-spanid'], $span->guid());
         $this->assertEquals($carrier['ot-tracer-traceid'], $span->traceGUID());
         $this->assertEquals($carrier['ot-tracer-sampled'], 'true');
         $span->finish();
 
-        $child = $tracer->join('child', LIGHTSTEP_FORMAT_TEXT_MAP, $carrier);
+        $child = $tracer->join('child', SPLUNK_FORMAT_TEXT_MAP, $carrier);
         $this->assertEquals($child->traceGUID(), $span->traceGUID());
         $this->assertEquals($child->getParentGUID(), $span->guid());
         $child->finish();

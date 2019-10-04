@@ -11,6 +11,7 @@ class ClientSpan implements \SplunkTracingBase\Span {
 
     protected $_guid = "";
     protected $_traceGUID = "";
+    protected $_parentGUID = NULL;
     protected $_operation = "";
     protected $_tags = [];
     protected $_baggage = [];
@@ -117,20 +118,18 @@ class ClientSpan implements \SplunkTracingBase\Span {
         }
 
         $this->_traceGUID = $span->_traceGUID;
-        $this->setTag("parent_span_guid", $span->guid());
+        // $this->setTag("parent_span_guid", $span->guid());
+        $this->_parentGUID = $span->guid();
         return $this;
     }
 
     public function setParentGUID($guid) {
-        $this->setTag("parent_span_guid", $guid);
+        $this->_parentGUID = $guid;
         return $this;
     }
 
     public function getParentGUID() {
-        if (array_key_exists('parent_span_guid', $this->_tags)) {
-            return $this->_tags['parent_span_guid'];
-        }
-        return NULL;
+        return $this->_parentGUID;
     }
 
     public function logEvent($event, $payload = NULL) {
@@ -141,9 +140,7 @@ class ClientSpan implements \SplunkTracingBase\Span {
     }
 
     public function log($fields) {
-        $record = [
-            'span_guid' => strval($this->_guid),
-        ];
+        $record = [];
         $payload = NULL;
 
         if (!empty($fields['event'])) {
@@ -185,7 +182,6 @@ class ClientSpan implements \SplunkTracingBase\Span {
         $text = vsprintf($fmt, $allArgs);
 
         $this->_rawLogRecord([
-            'span_guid' => strval($this->_guid),
             'level' => $level,
             'error_flag' => $errorFlag,
             'message' => $text,
@@ -197,7 +193,6 @@ class ClientSpan implements \SplunkTracingBase\Span {
      * Internal use only.
      */
     public function _rawLogRecord($fields, $payloadArray) {
-        $fields['runtime_guid'] = strval($this->_guid);
 
         if (empty($fields['timestamp_micros'])) {
             $fields['timestamp_micros'] = intval(Util::nowMicros());
@@ -222,65 +217,44 @@ class ClientSpan implements \SplunkTracingBase\Span {
         $this->_logRecords[] = $rec;
     }
 
-    public function toThrift() {
-        // Coerce all the types to strings to ensure there are no encoding/decoding
-        // issues
-        $joinIds = [];
-        foreach ($this->_joinIds as $key => $value) {
-            $pair = new \CroutonThrift\TraceJoinId([
-                "TraceKey" => strval($key),
-                "Value"    => strval($value),
-            ]);
-            $joinIds[] = $pair;
-        }
-
-        $tags = [];
-        foreach ($this->_tags as $key => $value) {
-            $pair = new \CroutonThrift\KeyValue([
-                "Key"      => strval($key),
-                "Value"    => strval($value),
-            ]);
-            $tags[] = $pair;
-        }
-
-        // Convert the logs to thrift form
-        $thriftLogs = [];
-        foreach ($this->_logRecords as $lr) {
-            $lr->runtime_guid = $this->_runtimeGUID;
-            $thriftLogs[] = $lr->toThrift();
-        }
-
-        $rec = new \CroutonThrift\SpanRecord([
-            "runtime_guid"    => strval($this->_runtimeGUID),
-            "span_guid"       => strval($this->_guid),
-            "trace_guid"      => strval($this->_traceGUID),
-            "span_name"       => strval($this->_operation),
-            "oldest_micros"   => intval($this->_startMicros),
-            "youngest_micros" => intval($this->_endMicros),
-            "join_ids"        => $joinIds,
-            "error_flag"      => $this->_errorFlag,
-            "attributes"      => $tags,
-            "log_records"     => $thriftLogs,
-        ]);
-        return $rec;
-    }
 
     /**
      * @return Span A Proto representation of this object.
      */
     public function toJSON($runtime) {
+        $reportObjs = [];
         $spanContext = array('event' => array(
-            'trace_id' => Util::hexdec($this->traceGUID()),
-            'span_id' => Util::hexdec($this->guid()),
+            'runtime_guid' => $this->_runtimeGUID,
+            'trace_id' => $this->traceGUID(),
+            'span_id' => $this->guid(),
             'operation_name' => strval($this->_operation),
-            'seconds' => floor($this->_startMicros / 1000000),
-            'nanos' => $this->_startMicros % 1000000,
+            'timestamp' => $this->_startMicros / 1000000,
             'tags' => $this->_tags,
-            'logs' => $this->_logRecords,
-            'duration_micros' => $this->_endMicros-$this->_startMicros,
-            'baggage' => $this->_baggage),
-        'time' => $this->_startMicros / 1000000
-            // 'tracer_platform' => $runtime->_attrs->tracer_platform,
-            // 'tracer_platform_version' => $runtime->_attrs->tracer_platform_version,
-            // 'tracer_version'  => $runtime->_attrs->tracer_version
+            'duration' => $this->_endMicros-$this->_startMicros,
+            'baggage' => $this->_baggage,
+            'component_name' => $runtime->getGroupName(),
+            'parent_span_id' => $this->_parentGUID,
+            'tracer_platform' => $runtime->getAttr("tracer_platform"),
+            'tracer_platform_version' => $runtime->getAttr("tracer_platform_version"),
+            'tracer_version'  => $runtime->getAttr("tracer_version"),
+            'device'  => $runtime->getAttr("device"),
+        ),
+        'time' => $this->_startMicros / 1000000,
+        'sourcetype' => 'splunktracing:span',
         );
+        $reportObjs[] = json_encode($spanContext);
+        $logContext = $spanContext["event"];
+        unset($logContext["timestamp"]);
+        unset($logContext["duration"]);
+        foreach ($this->_logRecords as $lR) {
+            $logObj = array('event' => $logContext,
+                'time' => $lR->getField("timestamp_micros") / 1000000,
+                'sourcetype' => 'splunktracing:log',
+            );    
+            $logObj["event"]["timestamp"] = $lR->getField("timestamp_micros") / 1000000;
+            $logObj["event"]["fields"] = $lR->getFields();
+            $reportObjs[] = json_encode($logObj);;
+        }
+        return "\n".join($reportObjs);
+    }
+}

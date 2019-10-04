@@ -54,7 +54,7 @@ class ClientTracer implements \SplunkTracingBase\Tracer, LoggerAwareInterface {
         $defaults = [
             'collector_host'            => '127.0.0.1',
             'collector_port'            => 8088,
-            'collector_secure'          => false,
+            'collector_secure'          => true,
 
             'transport'                 => 'http_json',
             'max_log_records'           => 1000,
@@ -163,6 +163,7 @@ class ClientTracer implements \SplunkTracingBase\Tracer, LoggerAwareInterface {
             'tracer_platform' => 'php',
             'tracer_platform_version' => phpversion(),
             'tracer_version'  => SPLUNKTRACING_VERSION,
+            'device' => gethostname(),
         ];
 
         // Generate the GUID on initialization as the GUID should be
@@ -170,11 +171,11 @@ class ClientTracer implements \SplunkTracingBase\Tracer, LoggerAwareInterface {
         $this->_guid = $this->_generateStableUUID($accessToken, $componentName);
         $this->_auth = new Auth($accessToken);
 
-        $attrs = [];
-        foreach ($runtimeAttrs as $key => $value) {
-            $attrs[] = new KeyValue(strval($key), strval($value));
-        }
-        $this->_runtime = new Runtime(strval($this->_guid), intval($this->_startTime), strval($componentName), $attrs);
+        // $attrs = [];
+        // foreach ($runtimeAttrs as $key => $value) {
+        //     $attrs[$key] = strval($value);
+        // }
+        $this->_runtime = new Runtime(strval($this->_guid), intval($this->_startTime), strval($componentName), $runtimeAttrs);
     }
 
     public function guid() {
@@ -223,11 +224,11 @@ class ClientTracer implements \SplunkTracingBase\Tracer, LoggerAwareInterface {
      */
     public function inject(Span $span, $format, &$carrier) {
         switch ($format) {
-        case LIGHTSTEP_FORMAT_TEXT_MAP:
+        case SPLUNK_FORMAT_TEXT_MAP:
             $this->injectToArray($span, $carrier);
             break;
 
-        case LIGHTSTEP_FORMAT_BINARY:
+        case SPLUNK_FORMAT_BINARY:
             throw new \Exception('FORMAT_BINARY not yet implemented');
             break;
 
@@ -259,11 +260,11 @@ class ClientTracer implements \SplunkTracingBase\Tracer, LoggerAwareInterface {
         $span->setStartMicros($this->_util->nowMicros());
 
         switch ($format) {
-        case LIGHTSTEP_FORMAT_TEXT_MAP:
+        case SPLUNK_FORMAT_TEXT_MAP:
             $this->joinFromArray($span, $carrier);
             break;
 
-        case LIGHTSTEP_FORMAT_BINARY:
+        case SPLUNK_FORMAT_BINARY:
             throw new \Exception('FORMAT_BINARY not yet implemented');
             break;
 

@@ -2,8 +2,6 @@
 
 use SplunkTracingBase\Client\ClientTracer;
 use SplunkTracingBase\Client\Transports\TransportHTTPJSON;
-use SplunkTracingBase\Client\Transports\TransportHTTPPROTO;
-use SplunkTracingBase\Client\Transports\TransportUDP;
 
 class ClientTracerTest extends BaseSplunkTracingTest
 {
@@ -23,9 +21,7 @@ class ClientTracerTest extends BaseSplunkTracingTest
     {
 
         return [
-            'udp' => ['udp', TransportUDP::class],
             'http_json' => ['http_json', TransportHTTPJSON::class],
-            'http_proto' => ['http_proto', TransportHTTPPROTO::class],
         ];
     }
 }

@@ -35,20 +35,12 @@ class ReportRequest
      * @return JSONReportRequest A JSON representation of this object.
      */
     public function toJSON() {
-        // $counts = [];
-        // foreach ($this->_counters as $key => $value) {
-        //     $counts[] = new MetricsSample([
-        //         'name' => strval($key),
-        //         'int_value' => intval($value),
-        //     ]);
-        // }
-        // $internalMetrics = new InternalMetrics([
-        //     'counts' => $counts
-        // ]);
 
         $spans = [];
         foreach ($this->_spanRecords as $sr) {
-            $spans[] = $sr->toJSON($this->_runtime);
+            // $spans[] = $sr->toJSON($this->_runtime);
+            array_push($spans, $sr->toJSON($this->_runtime));
+
         }
         return $spans;
     }

@@ -32,4 +32,8 @@ class Runtime
         return $this->_group_name;
     }
 
+    public function getAttr($attrKey) {
+        return $this->_attrs[$attrKey];
+    }
+
 }

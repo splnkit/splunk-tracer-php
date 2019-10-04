@@ -19,4 +19,12 @@ class LogRecord
         $this->_fields = $fields;
         $this->_util = new Util();
     }
+
+    public function getFields() {
+        return $this->_fields;
+    }
+
+    public function getField($fieldName) {
+        return $this->_fields[$fieldName];
+    }
 }

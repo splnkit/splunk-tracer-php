@@ -8,6 +8,7 @@ class TransportHTTPJSON {
 
     protected $_host = '';
     protected $_port = 0;
+    protected $_protocol = "";
     protected $_verbose = 0;
     /**
      * @var LoggerInterface
@@ -27,7 +28,7 @@ class TransportHTTPJSON {
 
         // The prefixed protocol is only needed for secure connections
         if ($options['collector_secure'] == True) {
-            $this->_host = "ssl://" . $this->_host;
+            $this->_protocol = "ssl://";
         }
     }
 
@@ -65,7 +66,7 @@ class TransportHTTPJSON {
         ]);
 
         // Use a persistent connection when possible
-        $fp = @stream_socket_client($this->_host.":".$this->_port, $errno, $errstr, ini_get("default_socket_timeout"), STREAM_CLIENT_CONNECT, $context);
+        $fp = @stream_socket_client($this->_protocol . $this->_host.":".$this->_port, $errno, $errstr, ini_get("default_socket_timeout"), STREAM_CLIENT_CONNECT, $context);
         if (!$fp) {
             if ($this->_verbose > 0) {
                 $this->logger->error($errstr);
