@@ -1,5 +1,5 @@
 {
-    "name": "splunktracing/tracer",
+    "name": "splunk/tracer",
     "description": "Splunk instrumentation API",
     "license": "MIT",
     "require": {

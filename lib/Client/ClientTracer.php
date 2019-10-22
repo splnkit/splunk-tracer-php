@@ -54,7 +54,7 @@ class ClientTracer implements \SplunkTracingBase\Tracer, LoggerAwareInterface {
         $defaults = [
             'collector_host'            => '127.0.0.1',
             'collector_port'            => 8088,
-            'collector_secure'          => true,
+            'collector_secure'          => false,
 
             'transport'                 => 'http_json',
             'max_log_records'           => 1000,

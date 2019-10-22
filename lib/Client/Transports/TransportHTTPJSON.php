@@ -58,12 +58,13 @@ class TransportHTTPJSON {
         $header .= "Connection: keep-alive\r\n\r\n";
 
         // Use a persistent connection when possible
-        $context = stream_context_create([
-            'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false
-            ]
-        ]);
+        $context = stream_context_create();
+        // $context = stream_context_create([
+        //     'ssl' => [
+        //         'verify_peer' => false,
+        //         'verify_peer_name' => false
+        //     ]
+        // ]);
 
         // Use a persistent connection when possible
         $fp = @stream_socket_client($this->_protocol . $this->_host.":".$this->_port, $errno, $errstr, ini_get("default_socket_timeout"), STREAM_CLIENT_CONNECT, $context);

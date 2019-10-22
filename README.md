@@ -7,7 +7,7 @@ The SplunkTracing distributed tracing library for PHP.
 ## Installation
 
 ```bash
-composer require splnkit/tracer
+composer require splunk/tracer
 ```
 
 The `splunk/tracer` package is [available here on packagist.org](https://packagist.org/packages/splunk/tracer).
