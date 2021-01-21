@@ -29,7 +29,7 @@ class ClientSpan implements \SplunkTracingBase\Span {
         $this->_tracer = $tracer;
         $this->_traceGUID = $tracer->_generateUUIDString();
         $this->_guid = $tracer->_generateUUIDString();
-        $this->$maxPayloadDepth = $maxPayloadDepth;
+        $this->maxPayloadDepth = $maxPayloadDepth;
     }
 
     public function __destruct() {
@@ -93,6 +93,12 @@ class ClientSpan implements \SplunkTracingBase\Span {
     public function setTag($key, $value) {
         $this->_tags[$key] = $value;
         return $this;
+    }
+
+    public function setTags($tags){
+      foreach ($tags as $key => $value){
+        $this->_tags[$key] = $value;
+      }
     }
 
     public function setBaggageItem($key, $value) {
