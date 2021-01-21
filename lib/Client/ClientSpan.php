@@ -95,6 +95,12 @@ class ClientSpan implements \SplunkTracingBase\Span {
         return $this;
     }
 
+    public function setTags($tags){
+      foreach ($tags as $key => $value){
+        $this->_tags[$key] = $value;
+      }
+    }
+
     public function setBaggageItem($key, $value) {
         $this->_baggage[$key] = $value;
         return $this;
