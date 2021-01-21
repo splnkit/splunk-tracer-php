@@ -29,7 +29,7 @@ class ClientSpan implements \SplunkTracingBase\Span {
         $this->_tracer = $tracer;
         $this->_traceGUID = $tracer->_generateUUIDString();
         $this->_guid = $tracer->_generateUUIDString();
-        $this->$maxPayloadDepth = $maxPayloadDepth;
+        $this->maxPayloadDepth = $maxPayloadDepth;
     }
 
     public function __destruct() {
